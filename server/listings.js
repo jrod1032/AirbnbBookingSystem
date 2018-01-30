@@ -1,4 +1,5 @@
 const redisdb = require('../redisdb/test.js')
+const elasticdb = require('../elasticdb/index.js')
 
 const Router = require('koa-router');
 const router = Router({
@@ -35,8 +36,9 @@ const anotherListing = {
 }
 
 async function goGetListingFromDB (ctx, next) {
-  console.log('Fetching data from listings');
+  console.log('Fetching data from listings DB');
   //extract listing id from ctx
+  let listing = ctx.params.listing;
   //call some function that asks listingDB for listing at that id 
 
   //then...
@@ -47,37 +49,58 @@ async function goGetListingFromDB (ctx, next) {
 async function goGetSearchFromElastic (ctx, next) {
   console.log('Fetching data from ElasticDB')
   //extract city search for from ctx
-  var cityUserSearchedFor = 'Boston';
-  console.log('searching for: ', cityUserSearchedFor);
+  let keyword = ctx.query.q;
   //call some function that asks elastic, get back results
-
-  //then....
-  redisdb.writeSearchToCache(searchResult, cityUserSearchedFor)
-  ctx.body = searchResult;
-
+   let listings = await elasticdb.searchKeyword(keyword)
+   //data shape
+   /*
+    "hits": [
+            {
+              "_index": "airbnb",
+              "_type": "listings",
+              "_id": "2",
+              "_score": 0.2876821,
+              "_source": {
+                "title": "Home near Franklin Park"
+              }
+            },
+            {
+              "_index": "airbnb",
+              "_type": "listings",
+              "_id": "1",
+              "_score": 0.2876821,
+              "_source": {
+                "title": "Comfy Cambridge Home"
+              }
+            }
+          ]
+   */
+  //redisdb.writeSearchToCache(listing.hits.hits, keyword)
+  ctx.body = listings.hits.hits;
 }
 
-router.get('/', async (ctx, next) => {
-  let searchField = 'Boston';
-  let data = await redisdb.getSearchResults(searchField);
-  console.log('search results', data);
+router.get('/search', async (ctx, next) => {
+  let keyword = ctx.query.q;
+  let data = await redisdb.getSearchResults(keyword);
+  console.log('search results from cache', data);
   if (data) {
     ctx.body = data
   } else {
-    next()
+    return next()
   }
 }, goGetSearchFromElastic);
 
 
-router.get('/listing', async (ctx, next) => {
-  let listing = '21123';
+router.get('/listing/:listing', async (ctx, next) => {
+  console.log('params', ctx.params.listing)
+  let listing = ctx.params.listing
   let data = await redisdb.getListing(listing);
   console.log('data: ', data)
   if (data) {
     ctx.body = data
   } else {
     console.log('Not in cache')
-    next()
+    return next()
   }
 
 }, goGetListingFromDB);
