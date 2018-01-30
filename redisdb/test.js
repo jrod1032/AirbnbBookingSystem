@@ -18,12 +18,12 @@ function writeListingToCache (listing) {
   client.hmset(listing.id.toString(), 'title', listing.title, 'hostName', listing.hostName, 'superHost', listing.superHost, 'city', listing.city)
 }
 
-function writeSearchToCache (searchResult, city) {
+function writeSearchToCache (searchResult, query) {
   searchResult.forEach( (result) => {
     /* NOTE: For each search result, we are storing id as key, and title as value
     We do this to optimize space, as opposed to having separate 'id' key to 
     store id. */
-    client.hset(city, result.id, result.title)
+    client.hset(query, result._id, result._source.title)
   })
 }
 
