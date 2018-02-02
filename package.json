@@ -1,0 +1,39 @@
+{
+  "name": "search-browse-service",
+  "version": "1.0.0",
+  "description": "Search/Browse miniservice in AirBnB clone to handle listing searches and views",
+  "main": "server/index.js",
+  "scripts": {
+    "cache": "redis-server",
+    "start-dev": "nodemon server/index.js",
+    "start": "node server/index.js",
+    "test": "mocha tests/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jrod1032/AirbnbBookingSystem.git"
+  },
+  "author": "jrod1032",
+  "license": "ISC",
+  "homepage": "https://github.com/jrod1032/AirbnbBookingSystem#readme",
+  "dependencies": {
+    "axios": "^0.17.1",
+    "bluebird": "^3.5.1",
+    "elasticsearch": "^14.0.0",
+    "faker": "^4.1.0",
+    "json-schema-faker": "^0.5.0-rc12",
+    "koa": "^2.4.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-router": "^7.3.0",
+    "redis": "^2.8.0",
+    "redis-proto": "^2.1.0",
+    "sinon": "^4.2.2",
+    "sinon-chai": "^2.14.0"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "eslint": "^4.13.1",
+    "mocha": "^5.0.0",
+    "supertest": "^3.0.0"
+  }
+}
