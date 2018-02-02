@@ -4,7 +4,7 @@ const Router = require('koa-router');
 const router = new Router();
 const bodyParser = require('koa-bodyparser');
 const port = process.env.PORT || 3000;
-const listings = require('./listings.js');
+const routes = require('./routes.js');
 
 //Set up body parsing middleware
 app.use(bodyParser());
@@ -27,32 +27,13 @@ app.use(async (ctx, next) => {
   console.log(`Timing? ${ctx.method} ${ctx.url} - ${ms}`);
 });
 
-// app.use(listings.routes());
-let searchResult = [{
-    id:53323,
-    title: 'Many pools!',
-  },
-  {
-    id: 21123,
-    title: 'Home near Franklin Park',
-  },
-  {
-    id: 765433,
-    title: 'Comfy Cambridge Home'
-  }]
 
-
-// router.get('/', (ctx, next) => {
-//   ctx.response.body = JSON.stringify(searchResult)
-// })
 app
-  .use(listings.routes())
+  .use(routes.routes())
   .use(router.allowedMethods());
 
-// app.use(async ctx => {
-//   ctx.response.status = 201;
-//   ctx.response.body = JSON.stringify(searchResult)
-// });
+if(!module.parent) {
+  app.listen(port, () => console.log(`listening on port ${port}!`) ) 
+}
 
-//app.listen(3000);
-app.listen(port, () => console.log(`listening on port ${port}!`))
+module.exports = app;
