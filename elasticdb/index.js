@@ -27,8 +27,9 @@ function searchKeyword (keyword) {
           "must": [
                   {
                     "query_string": {
-                      "default_operator": "OR",
+                      "default_operator": "AND",
                       "query": keyword,
+                      "default_field": "name"
                       // "cutoff_frequency": 0.001
                       // "analyze_wildcard": true
                     }

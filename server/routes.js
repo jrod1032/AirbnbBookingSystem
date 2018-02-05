@@ -9,11 +9,12 @@ router.get('/search',
   utils.getSearchFromElastic);
 
 router.get('/listing/:listing', 
-  utils.writeViewEventToEvents, 
+  utils.writeViewEventToEvents,
   utils.getListingFromRedis, 
-  utils.getListingFromDB);
+  utils.getListingFromDB
+  );
 
-router.post('/listing/:listing', 
+router.post('/booking/:listing', 
   utils.sendBookingToBookings)
 
 module.exports = router;

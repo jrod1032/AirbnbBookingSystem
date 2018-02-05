@@ -14,12 +14,11 @@ client.on("error", (err) => {
 // client.hset('hash key', 'hashtest1', 'some value', redis.print);
 
 function writeListingToCache (listing) {
-  console.log('writing to cache a listing: ', listing);
-  client.hmsetAsync(listing.id.toString(), 'id', listing.id, 'name', listing.name, 'hostID', listing.hostID, 'superBool', listing.superBool)
-  .then()
-  .catch((err) => {
-    console.log('error writing listing to cache', err) 
-  })
+  client.hmsetAsync(listing.id, 'id', listing.id, 'name', listing.name, 'hostName', listing.hostName, 'superHost', listing.superHost)
+  // .then( () => console.log('cached!'))
+  // .catch((err) => {
+  //   console.log('error writing listing to cache', err) 
+  // })
 }
 
 function writeSearchToCache (searchResult, query) {
@@ -28,23 +27,24 @@ function writeSearchToCache (searchResult, query) {
     store id. */
 
   searchResult.forEach( (result) => {
-    console.log('writing to cache search: ', result)
     client.hsetAsync(query, result._id, result._source.name)
   })
 }
 
 function getListing (listingID) {
-  console.log('getting listing from cache')
   return client.hgetallAsync(listingID)
-    // .then( (res) => console.log('is there a res?', res))
-    // .catch( (err) => console.log('an error?', err))
+     .then( (value) => {
+      return value;
+     })
+     .catch( (err) => console.log('an error?', err))
 }
 
 function getSearchResults (searchField) {
-  console.log('recovering search from cache')
   return client.hgetallAsync(searchField)
-    // .then( (res) => console.log('is there a res?', res))
-    // .catch( (err) => console.log('an error?', err))
+     .then( (value) => {
+      return value;
+     })
+     .catch( (err) => console.log('an error?', err))
 
 }
 
