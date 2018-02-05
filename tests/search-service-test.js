@@ -1,16 +1,18 @@
 const {expect, should} = require('chai');
 const chai = require('chai')
 const sinonChai = require("sinon-chai");
-const supertest = require('supertest');
+const supertest = require('supertest-koa-agent');
 const server = require('../server/index.js');
-const router = require('../server/routes.js');
+// const router = require('../server/routes.js');
 const utils = require('../server/utils.js')
-const redisdb = require('../redisdb/test.js');
+const redisdb = require('../redisdb/index.js');
 const elasticdb = require('../elasticdb/index.js');
-const request = supertest('http://localhost:3000')
+const request = supertest(server);
 const sinon = require('sinon');
 
 chai.use(sinonChai);
+
+
 describe('Search Service Events', () => {
 
   const searchResults = [{
@@ -29,139 +31,119 @@ describe('Search Service Events', () => {
             }
           ]
 
-  const listing = {  
-    id: '4654566',
-    name: 'Balanced Room in Lake Elisabethville',
-    hostID: '98765',
-    superBool: true
-  }        
+  const listing = {
+    "id":"9999999",
+    "name":"sexy cave in Eddieside",
+    "hostName":"Cyril Cormier",
+    "superHost":"true"
+  }    
+
+  const mochaAsync = (fn) => {
+    return async () => {
+        try {
+            await fn();
+            return;
+        } catch (err) {
+          return
+        }
+    };
+};
 
   describe('GET requests to /listings/search', () => {
 
     it('should respond with 200 status code', (done) => {
       request
-        .get('/listings/search?q=home')
+        .get('/listings/search?q=mansion+near+Whiteport')
         .expect(200, done);
     });
 
-    it('should return listings obj with key value pairs', (done) => {
+    it('should return search results obj with key value pairs', (done) => {
        request
-        .get('/listings/search?q=home')
+        .get('/listings/search?q=mansion+near+Whiteport')
         .then( (res) => {
-          console.log('testresponse, ',res.body)
           expect(res.body).to.be.an('object');
-          expect(res.body[1]).to.equal('Comfy Cambridge Home');
+          expect(res.body["3059026"]).to.equal('Down-sized mansion near Whiteport');
           done();
           });
     });
 
-    it('should call Redis cache before ElasticDB', async (done) => {
+    it('should call Redis cache before ElasticDB', mochaAsync(async (done) => {
       sinon.spy(redisdb, 'getSearchResults');
       sinon.spy(utils, 'getSearchFromElastic');
       const query = 'myHashForTesting'
        request
         .get(`/listings/search?q=${query}`)
-        .then( (res) => {
-          expect(redisdb.getSearchResults).to.have.been.calledWith(query);
-          expect(utils.getSearchFromElastic).to.not.have.been.called;
-          done()
-        })
-    });
+        expect(redisdb.getSearchResults).to.have.been.calledWith(query);
+        expect(utils.getSearchFromElastic).to.not.have.been.called;
 
-    it('should call ElasticDB only if not found in cache', (done) => {
-      sinon.spy(utils, 'getSearchFromElastic');
-      const query = 'this query is too complicated to be in the cache';
-       request
+
+    }));
+
+    it('should retrieve results from ES in under 200ms', (done) => {
+      const query = 'mansion+near+Whiteport';
+      request
         .get(`/listings/search?q=${query}`)
         .then( (res) => {
-          utils.getSearchFromElastic.restore()
-          expect(utils.getSearchFromElastic).to.have.been.called
+          expect(parseInt(res.header['x-response-time'])).to.be.below(200)
           done()
         })
-    });
+    })
 
   });
 
-  describe('RedisCache', () => {
+  describe('GET requests to /listings/listing/:listingId',() => {
 
-    it('should return all listing data for a specified listing', async (done) => {
-      // let answer = await redisdb.writeListingToCache(listing)
-      try{
-        
-       let results = await redisdb.getListing(listing.id);
-       expect(answer).to.exist;
-       expect(results).to.be.an('object');
-       expect(results).to.have.all.keys('id', 'name', 'hostID', 'superBool')
-       done()
-      } catch (e){
-        console.log('error', e)
-
-      }
-    });
-
-    it('should return search results for a specified query', async (done) => {
-      try {
-      const query = 'awesome people'
-      // let answer = await redisdb.writeSearchToCache(results, query);
-      let redisResults = await redisdb.getSearchResults(query);
-      // expect(answer).to.exist;
-      expect(redisResults).to.exist;
-      expect(redisResults).to.be.an('object');
-      expect(redisResults).to.eql(results)
-      done()
-      }
-      catch(e) {
-        console.log('error', e)
-      }
-    });
-
-  });
-
-  describe('GET requests to /listings/listing/:listingId', () => {
-
-    it('should write view event to events service', (done) => {
-      sinon.spy(utils, 'writeViewEventToEvents');
+    it('should write view event to events service', mochaAsync(async (done) => {
+       sinon.stub(utils, 'writeViewEventToEvents');
        request
         .get(`/listings/listing/${listing.id}`)
-        .then( (res) => {
-          expect(utils.writeViewEventToEvents).to.have.been.called
-          utils.writeViewEventToEvents
-        })
-    });
+        .expect(utils.writeViewEventToEvents).to.have.been.called         
+    }));
 
-    it('should return details of listing', (done) => {
+    it('should get booking info for called listing', mochaAsync(async (done) => {
+       sinon.stub(utils, '_getBookingInfo');
+       request
+        .get(`/listings/listing/${listing.id}`)
+        .expect(utils._getBookingInfo).to.have.been.called         
+    }));
+
+
+    it('should return details of listing in under 20 ms', mochaAsync(async (done) => {
+      sinon.spy(utils, 'getListingFromRedis');
        request
         .get(`/listings/listing/${listing.id}`)
         .then((res) => {
           expect(res.body).to.be.an('object');
-          console.log('listingbody', res.body)
-          expect(res.body.id).to.equal('4654566')
+          expect(utils.getListingFromRedis.to.have.been.called)
+          expect(res.body.name).to.equal('sexy cave in Eddieside')
+          expect(parseInt(res.header['x-response-time'])).to.be.below(20)
           done();
         })
-    });
+    }));
 
     it('should respond with 200 status code', (done) => {
       request
-        .get('/listings/search?q=home')
+        .get('/listings/listing/${listing.id}`')
         .expect(200, done)
     });
 
   });
 
-  describe('POST request to /listings/listing/:listing', () => {
+  describe('POST request to /listings/booking/:listing', () => {
 
     it('should respond with a 201 status code', (done) => {
        request
-        .post(`/listings/listing/${listing.id}`)
+        .post(`/listings/booking/${listing.id}`)
         .expect(201, done);
     });
 
-    it('should send booking information to bookings service', (done) => {
+    it('should send booking information to bookings service', mochaAsync( async (done) => {
       sinon.spy(utils, 'sendBookingToBookings');
        request
-        .post(`/listings/listing/${listing.id}`)
+        .post(`/listings/booking/${listing.id}`)
         .expect(utils.sendBookingToBookings).to.have.been.called;
-    });
+
+    }));
 
   });
 
