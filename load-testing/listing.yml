@@ -1,0 +1,18 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 100
+      name: "Warm up"
+    - duration: 30
+      arrivalRate: 100
+      name: 'Sustained light load'
+    - duration: 30
+      arrivalRate: 100
+      rampTo: 500
+      name: 'Going to max '    
+scenarios:
+  - flow:
+    - get:
+        url: "/listings/listing/9999999"

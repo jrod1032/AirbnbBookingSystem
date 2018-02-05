@@ -32,12 +32,15 @@ const generateRandomSearch = function(i) {
 const iterationTime = function(stream, i) {
   let ok = true;
   do {
-  let data = generateRandomSearch(i);
+  let data = JSON.stringify(generateRandomSearch(i));
+  let index = JSON.stringify({_index: 'airbnb', _type: 'listings', '_id': i})
     i--;
     if (i === 0) {
       console.log('last time');
+      stream.write(index + '\n')
       stream.write(data + '\n')
     } else {
+      ok = stream.write(index + '\n')
       ok = stream.write(data + '\n')
     }
   } while (i > 0 && ok);
