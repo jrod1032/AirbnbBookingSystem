@@ -7,7 +7,7 @@
     "cache": "redis-server",
     "start-dev": "nodemon server/index.js",
     "start": "node server/index.js",
-    "test": "mocha tests/"
+    "test": "nyc mocha tests/"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,7 @@
   "license": "ISC",
   "homepage": "https://github.com/jrod1032/AirbnbBookingSystem#readme",
   "dependencies": {
+    "artillery": "^1.6.0-12",
     "axios": "^0.17.1",
     "bluebird": "^3.5.1",
     "elasticsearch": "^14.0.0",
@@ -28,12 +29,14 @@
     "redis": "^2.8.0",
     "redis-proto": "^2.1.0",
     "sinon": "^4.2.2",
-    "sinon-chai": "^2.14.0"
+    "sinon-chai": "^2.14.0",
+    "supertest-koa-agent": "^0.3.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",
     "eslint": "^4.13.1",
     "mocha": "^5.0.0",
+    "nyc": "^11.4.1",
     "supertest": "^3.0.0"
   }
 }
