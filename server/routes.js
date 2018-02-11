@@ -9,7 +9,6 @@ router.get('/search',
   utils.getSearchFromElastic);
 
 router.get('/listing/:listing', 
-  utils.writeViewEventToEvents,
   utils.getListingFromRedis, 
   utils.getListingFromDB
   );

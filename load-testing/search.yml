@@ -1,5 +1,5 @@
 config:
-  target: 'http://localhost:3000'
+  target: 'http://localhost:8080'
   phases:
     - duration: 30
       arrivalRate: 1
@@ -11,8 +11,17 @@ config:
     - duration: 30
       arrivalRate: 100
       rampTo: 500
-      name: 'Going to max '    
+      name: 'Going to max'    
+    - duration: 30
+      arrivalRate: 500
+      name: 'Sustained max'  
+  processor: "./generateSearchQueries.js"
+      
 scenarios:
-  - flow:
+  - name: "Search for listings"
+    flow:
+    - function: "generateSemiSearch"
     - get:
-        url: "/listings/search?q=mansion+near+whiteport"
+        url: "/listings/search?q={{ name }}"
+    # - log: "Sent a search {{ name }}"    
+    

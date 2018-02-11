@@ -3,9 +3,8 @@ const elasticdb = require('../elasticdb/index.js');
 const http = require('axios');
 
 async function getSearchFromRedis(ctx, next) {
-  try{
+  try {
     let keyword = ctx.query.q;
-    console.log('keyword', keyword)
     let data = await redisdb.getSearchResults(keyword);
     if (data) {
       ctx.body = data
@@ -13,22 +12,90 @@ async function getSearchFromRedis(ctx, next) {
       return next()
     }
   } catch(err) {
-    console.log('some error', err) 
+    console.log('Error: ', err) 
   }
 }
 
 async function getSearchFromElastic (ctx, next) {
-  let keyword = ctx.query.q;
-  let listings = await elasticdb.searchKeyword(keyword)
-  if (listings.hits.total) {
-    redisdb.writeSearchToCache(listings.hits.hits, keyword)
-     //format results for consistency with cache data shape
-    let formattedListings = _formatData(listings.hist.hits);
-    ctx.body = formattedListings;
-  } else {
-    ctx.body = "Sorry, no listing for that search"
+  try {
+    let keyword = ctx.query.q;
+    let listings = await elasticdb.searchKeyword(keyword)
+    if (listings.hits.total) {
+      redisdb.writeSearchToCache(listings.hits.hits, keyword)
+       //format results for consistency with cache data shape
+      let formattedListings = _formatData(listings.hits.hits);
+      ctx.body = formattedListings;
+    } else {
+      ctx.body = "Sorry, no listing for that search"
+    }
+  } catch(err) {
+    console.log('Error: ', err)
   }
 
+}
+
+async function getListingFromRedis (ctx, next) {
+  try {
+    let listingId = ctx.params.listing.toString()
+    let listing = await redisdb.getListing(listingId);
+    if (listing) {
+      ctx.body = listing
+      ctx.res.once('finish', () => {
+        _writeViewEventToEvents(listing)
+        _getBookingInfo(listing)
+      })
+    } else {
+      return next()
+    }
+  } catch (err) {
+    console.log('Error: ', err)
+  }
+}
+
+async function getListingFromDB (ctx, next) {
+  console.log('Fetching data from listings DB');
+  let listingId = ctx.params.listing;
+
+  try {
+  // call to listings service
+
+  /* 
+  const listingServiceURL = 'http://listingService';
+  let listing = await http.get(listingServiceURL + `/${listingId}`) 
+  */
+
+  // example listing retrieved for local testing
+
+    const myListing = {
+      "id":"9999999",
+      "name":"sexy cave in Eddieside",
+      "hostName":"Cyril Cormier",
+      "superHost":"true"
+    } 
+      
+    redisdb.writeListingToCache(myListing)
+    ctx.body = myListing;
+    ctx.res.once('finish', () => {
+      _writeViewEventToEvents(myListing)
+      _getBookingInfo(myListing)
+    })
+  } catch (err) {
+    console.log('Error: ', err)
+  }
+
+}
+
+
+function sendBookingToBookings (ctx, next) {
+  const booking = ctx.params.listing
+  const bookingServiceURL = 'http://bookingService';
+  console.log('sending to Bookings')
+  //http request to booking service
+
+
+  // http.post(bookingServiceURL + '/booking', {params: {listing: ctx.params.listing}})
+    ctx.response.status = 202;
+    ctx.body = `Confirming booking of listing ${booking.id}`;
 }
 
 function _formatData (arrayOfObj) {
@@ -39,81 +106,15 @@ function _formatData (arrayOfObj) {
   return storage;
 }
 
-async function writeViewEventToEvents (ctx, next) {
-  let listing = ctx.params.listing
+function _writeViewEventToEvents (listing) {
   console.log('writing view event to events services with listing id', listing)
-   return next();
 }
 
-async function getListingFromRedis (ctx, next) {
-  let listing = ctx.params.listing.toString()
-  let data = await redisdb.getListing(listing);
-  if (data) {
-    ctx.body = data
-    ctx.res.once('finish', _getBookingInfo)
-  } else {
-    return next()
-  }
-}
+function _getBookingInfo (listing) {
+  console.log('get booking information for listing', listing)
+  // http request to booking service
 
-async function getListingFromDB (ctx, next) {
-  console.log('Fetching data from listings DB');
-  let listingId = ctx.params.listing;
-  const listingServiceURL = 'http://listingService';
-  // http.get(listingServiceURL + `/${listingId}`)
-  //   .then( (res) => {
-  //     //here we set body
-  //     ctx.body = res
-  //     ctx.res.once('finish', getBookingInfo)
-  //   })
-  //   .catch( (err) => {
-  //     console.error(err)
-  //   })
-//for local testing
-
-  const myListing = {
-    "id":"9999999",
-    "name":"sexy cave in Eddieside",
-    "hostName":"Cyril Cormier",
-    "superHost":"true"
-  }   
-  redisdb.writeListingToCache(myListing)
-  ctx.body = myListing;
-  ctx.res.once('finish', _getBookingInfo)
-}
-
-async function sendBookingToBookings (ctx, next) {
-  //expect an obj
-  const exampleBooking = {
-    id: 765433,
-    name: 'Comfy Cambridge Home',
-    hostID: '66159',
-    superHost: true,
-    user: 'Tom Brady',
-    booking: {
-      month: 'December',
-      day: '26',
-      year: '2018',
-      timeStamp: Date.now()
-    } 
-  }
-
-  const bookingServiceURL = 'http://bookingService';
-  console.log('sending to Bookings')
-  // http.post(bookingServiceURL + '/booking', {params: {listing: exampleBooking}})
-  //     .then(response => {
-  //       console.log('Sent to bookings!')
-  //     })
-  //     .catch(err => {
-  //       console.error(err);
-  //     })
-  ctx.response.status = 201;
-  ctx.body = `Confirming booking of listing ${exampleBooking.id}`;
-}
-
-async function _getBookingInfo () {
-  console.log('get booking information for listing')
-  // http.get(bookingServiceURL + '/booking', {params: {listingId: ctx.params.listing}})
+  // http.get(bookingServiceURL + '/booking', {params: {listing: listing}})
   //   .then(response => {
   //     console.log(response)
   //        //should yield array of timeStamps
@@ -126,11 +127,11 @@ async function _getBookingInfo () {
 
 module.exports.getSearchFromRedis = getSearchFromRedis
 module.exports.getSearchFromElastic = getSearchFromElastic
-module.exports.writeViewEventToEvents = writeViewEventToEvents
 module.exports.getListingFromRedis = getListingFromRedis
 module.exports.getListingFromDB = getListingFromDB
 module.exports.sendBookingToBookings = sendBookingToBookings
 //exporting for test purposes
+module.exports._writeViewEventToEvents = _writeViewEventToEvents
 module.exports._getBookingInfo = _getBookingInfo
 module.exports._formatData = _formatData
 

@@ -3,8 +3,8 @@ const bluebird = require('bluebird')
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 
-const REDIS_PORT = process.env.REDIS_PORT
-const client = redis.createClient(REDIS_PORT);
+const REDIS_PORT = process.env.REDIS_PORT || 6379
+const client = redis.createClient({host: 'redis'});
 
 client.on("error", (err) => {
   console.log("Error " + err)
