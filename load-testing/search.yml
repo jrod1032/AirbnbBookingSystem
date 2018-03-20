@@ -1,20 +1,20 @@
 config:
   target: 'http://localhost:8080'
   phases:
-    - duration: 30
-      arrivalRate: 1
-      rampTo: 100
+    - duration: 60
+      arrivalRate: 100
+      # rampTo: 100
       name: "Warm up"
-    - duration: 30
-      arrivalRate: 100
-      name: 'Sustained light load'
-    - duration: 30
-      arrivalRate: 100
-      rampTo: 500
-      name: 'Going to max'    
-    - duration: 30
-      arrivalRate: 500
-      name: 'Sustained max'  
+    # - duration: 15
+    #   arrivalRate: 100
+    #   name: 'Sustained light load'
+    # - duration: 15
+    #   arrivalRate: 100
+    #   rampTo: 300
+    #   name: 'Going to max'    
+    # - duration: 60
+    #   arrivalRate: 300
+    #   name: 'Sustained max'  
   processor: "./generateSearchQueries.js"
       
 scenarios:

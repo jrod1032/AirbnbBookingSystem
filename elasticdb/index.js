@@ -1,7 +1,7 @@
 var elasticsearch = require('elasticsearch');
 const ELASTIC_PORT = process.env.ELASTIC_PORT
 var client = new elasticsearch.Client({
-  host: 'elasticsearch:9200',
+  host: 'elasticsearch',
   log: 'trace'
 });
 
@@ -30,8 +30,6 @@ function searchKeyword (keyword) {
                       "default_operator": "AND",
                       "query": keyword,
                       "default_field": "name"
-                      // "cutoff_frequency": 0.001
-                      // "analyze_wildcard": true
                     }
                   },
                   {
@@ -40,12 +38,7 @@ function searchKeyword (keyword) {
                     }
                   }
                 ],
-          // "filter":  {
-          //   "stop": {
-          //     "type": "stop",
-          //     "stopwords": ["near", "and", "the", "in", "close", "to"]
-          //   }
-          // }    
+   
         }
       }
     }

@@ -10,7 +10,7 @@ router.get('/search',
 
 router.get('/listing/:listing', 
   utils.getListingFromRedis, 
-  utils.getListingFromDB
+  utils.getListingFromDB, 
   );
 
 router.post('/booking/:listing', 

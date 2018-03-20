@@ -7,6 +7,7 @@ async function getSearchFromRedis(ctx, next) {
     let keyword = ctx.query.q;
     let data = await redisdb.getSearchResults(keyword);
     if (data) {
+      console.log('got from redis')
       ctx.body = data
     } else {
       return next()
